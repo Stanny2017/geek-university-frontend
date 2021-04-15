@@ -11,17 +11,15 @@ const server = http.createServer((request, response) => {
         })
         .on('data', (chunk) => {
 
+            // chunk 初始为 二进制数据  buf.toString('utf8') 转化为字符串
             body.push(chunk.toString());
             console.log('onData event', body);
         })
         .on('end', () => {
-            console.log('end event')
-            // body = Buffer.concat(body).toString();
-            // console.log(body);
+            console.log('onEnd event',body)
             response.writeHead(200, { 'Content-Type': 'text/html' });
             response.end('Hello toy-broswer');
         });
-
 })
 
 server.listen(8080)
