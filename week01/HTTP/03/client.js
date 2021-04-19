@@ -1,5 +1,5 @@
 const net = require('net')
-
+const parser = require('./parser')
 /**
  * 设计一个 http 请求类
  * 
@@ -266,10 +266,17 @@ async function makeRequest() {
         }
     })
 
-    let response = await request.send();
+    const response = await request.send();
+    const { responseBody, responseHeaders } = response;
+
+    if (responseHeaders['Content-Type'] === 'text/html') {
+        var dom = parser.parserHTML(responseBody)
+    }
+
 
     console.log('the response is:\n')
     console.log(response)
+
 
 }
 

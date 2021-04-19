@@ -5,6 +5,29 @@ const http = require('http');
 const server = http.createServer((request, response) => {
     let body = [];
 
+    const htmlContent = `
+    <!DOCTYPE html>
+    <html lang="en">
+        <head>
+            <style>
+                .root {
+                    width: 100%;
+                    min-height: 300px;
+                }
+            </style>
+            <title>browser test</title>
+        </head>
+        <body>
+            <div class="root">
+                <div class="child-1">child-1</div>
+                <div class="child-2">child-2</div>
+                <div class="child-3">child-3</div>
+            </div>
+        </body>
+    </html>
+    
+    `
+
     request
         .on('error', (e) => {
             console.log(e);
@@ -18,7 +41,7 @@ const server = http.createServer((request, response) => {
         .on('end', () => {
             console.log('onEnd event', body)
             response.writeHead(200, { 'Content-Type': 'text/html' });
-            response.end('Hello toy-broswer');
+            response.end(htmlContent);
         });
 })
 
