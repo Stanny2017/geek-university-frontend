@@ -38,7 +38,9 @@ function emit(token) {
     }
 
     if (token.name && token.value) {
-        element.attribute[token.name] = token.value
+        element.attribute.push({
+            [token.name]: token.value
+        })
     }
 
     if (token.type === 'text') {
@@ -71,6 +73,12 @@ function emit(token) {
     }
 
     console.log(token)
+    console.log(element)
+    console.log(stack[0].children[0], '======')
+    if (stack[0].children[0]) {
+        console.log(JSON.stringify(stack[0].children[0]))
+    }
+
 }
 
 function data(character) {
@@ -209,7 +217,7 @@ function parserHTML(htmlString) {
 
 const case1 = '<div name="daipeng" age="20" school="xidian">xxxxxx</div>'
 parserHTML(case1)
-console.log(stack)
+// console.log(stack)
 
 module.exports = {
     parserHTML,
