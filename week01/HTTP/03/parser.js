@@ -7,7 +7,6 @@
  * case1：
  * <html attr=123 />
  * 
- * 
  * case 2： 兼容单引号
  * <html attr='123' />
  * 
@@ -19,12 +18,58 @@
  * 
  */
 
-
-const currentToken = null
-const currentAttribute = null
+let currentToken = null
+let currentAttribute = null
 const EOF = Symbol('EOF') // end of life
 
+let stack = [{ type: 'document', children: [] }]
+
+let element = null;
+
 function emit(token) {
+
+
+    if (token.type === 'startTag') {
+        element = {
+            type: token.tagName,
+            attribute: [],
+            children: []
+        }
+    }
+
+    if (token.name && token.value) {
+        element.attribute[token.name] = token.value
+    }
+
+    if (token.type === 'text') {
+        let { children } = element;
+        let lastChild;
+        if (children.length > 0) {
+            lastChild = children[children.length - 1]
+            if (lastChild.type === 'text') {
+                lastChild.content += token.content;
+            } else {
+                element.children.push({
+                    type: 'text',
+                    content: token.content
+                })
+            }
+
+        } else {
+            element.children.push({
+                type: 'text',
+                content: token.content
+            })
+        }
+    }
+
+    if (token.type === 'endTag') {
+        if (element.type === token.tagName) {
+            let top = stack[0]
+            top.children.push(element)
+        }
+    }
+
     console.log(token)
 }
 
@@ -34,6 +79,10 @@ function data(character) {
     } else if (character === '<') {
         return tagOpen;
     } else {
+        emit({
+            type: 'text',
+            content: character
+        })
         return data;
     }
 }
@@ -48,6 +97,10 @@ function tagOpen(character) {
         }
         return tagName(character);
     } else if (character === '/') {
+        currentToken = {
+            type: 'endTag',
+            tagName: ''
+        }
         return endTagOpen;
     }
 }
@@ -57,6 +110,7 @@ function tagName(character) {
         currentToken.tagName += character;
         return tagName;
     } else if (character.match(/^[\n\t\f\s]$/)) {
+        emit(currentToken);
         return beforeAttributeName;
     } else if (character === '>') {
         emit(currentToken)
@@ -64,14 +118,17 @@ function tagName(character) {
     }
 }
 
-
 function beforeAttributeName(character) {
     if (character === '>') {
         return data;
     } else if (character.match(/^[\n\t\f\s]$/)) {
         return beforeAttributeName;
     } else if (character.match(/^[a-zA-Z]$/)) {
-        return attributeName;
+        currentAttribute = {
+            name: '',
+            value: '',
+        }
+        return attributeName(character);
     } else {
 
     }
@@ -79,21 +136,50 @@ function beforeAttributeName(character) {
 
 function attributeName(character) {
     if (character.match(/^[a-zA-Z]$/)) {
+        currentAttribute.name += character;
 
         return attributeName;
     } else if (character === '=') {
-        return attributeName;
-    } else if (character === `"`) {
-
-        return beforeAttributeValue
+        return beforeAttributeValue;
+    } else {
+        return attributeName
     }
 }
 
 function beforeAttributeValue(character) {
     if (character === `"`) {
-        return endAttributeValue;
+        return attributeValue;
+    } else {
+        return beforeAttributeValue
+    }
+}
+
+function attributeValue(character) {
+    if (character === '"') {
+        return afterAttribute;
+    } else {
+        currentAttribute.value += character;
+        return attributeValue;
+    }
+}
+
+function afterAttribute(character) {
+    if (character === '>') {
+        emit(currentAttribute);
+        currentAttribute = {
+            name: '',
+            value: ''
+        }
+        return data
+    } else if (character.match(/[\n\t\f\s]/)) {
+        return afterAttribute;
     } else if (character.match(/[a-zA-Z]/)) {
-        return attributeValue(character);
+        emit(currentAttribute);
+        currentAttribute = {
+            name: '',
+            value: ''
+        }
+        return attributeName(character)
     }
 }
 
@@ -105,7 +191,8 @@ function endTagOpen(character) {
 
         return data;
     } else if (character.match(/^[a-zA-Z]$/)) {
-        return tagName
+
+        return tagName(character)
     }
 }
 
@@ -120,7 +207,10 @@ function parserHTML(htmlString) {
     state = state(EOF)
 }
 
+const case1 = '<div name="daipeng" age="20" school="xidian">xxxxxx</div>'
+parserHTML(case1)
+console.log(stack)
+
 module.exports = {
     parserHTML,
 }
-
