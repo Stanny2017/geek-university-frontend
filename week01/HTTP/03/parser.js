@@ -26,8 +26,17 @@ let stack = [{ type: 'document', children: [] }]
 
 let element = null;
 
+/**
+ * token type:
+ * 1. type: startTag/endTag , tagName
+ * 2. name, value (attribute)
+ * 3. type: text, content
+ */
+
+
 function emit(token) {
 
+    const top = stack[stack.length - 1];
 
     if (token.type === 'startTag') {
         element = {
@@ -35,50 +44,34 @@ function emit(token) {
             attribute: [],
             children: []
         }
-    }
 
-    if (token.name && token.value) {
-        element.attribute.push({
+        stack.push(element)
+
+    } else if (token.name && token.value) {
+
+        top.attribute.push({
             [token.name]: token.value
         })
-    }
+    } else if (token.type === 'text') {
 
-    if (token.type === 'text') {
-        let { children } = element;
-        let lastChild;
-        if (children.length > 0) {
-            lastChild = children[children.length - 1]
-            if (lastChild.type === 'text') {
-                lastChild.content += token.content;
-            } else {
-                element.children.push({
-                    type: 'text',
-                    content: token.content
-                })
-            }
-
+        if (top.children[0] && top.children[0].type === 'text') {
+            top.children[0].content += token.content
         } else {
-            element.children.push({
+            top.children.push({
                 type: 'text',
-                content: token.content
+                content: token.content,
             })
         }
-    }
 
-    if (token.type === 'endTag') {
-        if (element.type === token.tagName) {
-            let top = stack[0]
-            top.children.push(element)
+    } else if (token.type === 'endTag') {
+        if (top.type === token.tagName) {
+            const wrapper = stack[stack.length - 2];
+            wrapper.children.push(top);
+            stack.pop();
         }
     }
 
     console.log(token)
-    console.log(element)
-    console.log(stack[0].children[0], '======')
-    if (stack[0].children[0]) {
-        console.log(JSON.stringify(stack[0].children[0]))
-    }
-
 }
 
 function data(character) {
@@ -215,9 +208,15 @@ function parserHTML(htmlString) {
     state = state(EOF)
 }
 
-const case1 = '<div name="daipeng" age="20" school="xidian">xxxxxx</div>'
+const case1 = `
+<div name="daipeng" age="20" school="xidian">
+    <div>child-div</div>
+    <p>i'm paragraph p</p>
+</div>
+`
+console.log(case1)
 parserHTML(case1)
-// console.log(stack)
+console.log(JSON.stringify(stack, null, 2))
 
 module.exports = {
     parserHTML,
