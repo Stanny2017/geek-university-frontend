@@ -1,0 +1,23 @@
+{
+  "name": "geek-university-frontend",
+  "version": "1.0.0",
+  "description": "",
+  "main": ".prettierrc.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Stanny2017/geek-university-frontend.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Stanny2017/geek-university-frontend/issues"
+  },
+  "homepage": "https://github.com/Stanny2017/geek-university-frontend#readme",
+  "dependencies": {
+    "css": "^3.0.0"
+  }
+}

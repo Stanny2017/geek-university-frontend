@@ -42,8 +42,6 @@ class Request {
         this.headers['Content-Length'] = this.bodyText.length;
     }
 
-
-
     toString() {
         const requestLine = `${this.method} ${this.path} HTTP/1.1`;
         const requestHeaders = `${Object.keys(this.headers).map(key => `${key}: ${this.headers[key]}`).join('\r\n')}`;
@@ -54,7 +52,7 @@ class Request {
 
     send(connection) {
         return new Promise((resolve, reject) => {
-            let responseParser = new ResonseParser();
+            let responseParser = new ResponseParser();
 
             if (connection) {
                 connection.write(this.toString())
@@ -120,7 +118,7 @@ class Request {
  * 4. response headers:  key: value（以冒号空格分隔）  遇到 \r\n 则进入下一个 header key 的解析
  * 5. 直到 解析 header key 时仍然遇到了 \r\n  则标志着 response headers 解析结束，开始进入 response body
  */
-class ResonseParser {
+class ResponseParser {
 
     constructor() {
         this.httpVersion = '';
