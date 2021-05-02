@@ -15,7 +15,7 @@
  * 
  * todo1: 兼容单引号
  * <html attr='123' />
- * todo2: 兼容自封闭
+ * todo2: 兼容自封闭标签 (已完成)
  * <div><input /> </div> 
  * 
  */
