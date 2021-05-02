@@ -7,19 +7,21 @@
  * case1：
  * <html attr=123 />
  * 
- * case 2： 兼容单引号
- * <html attr='123' />
- * 
- * case 3： 兼容双引号
+ * case 2： 兼容双引号
  * <html attr="123" />
  * 
- * case 4:  正常非自闭和标签
+ * case 3:  正常非自闭和标签
  * <div> </div>
+ * 
+ * todo1: 兼容单引号
+ * <html attr='123' />
+ * todo2: 兼容自封闭
+ * <div><input /> </div> 
  * 
  */
 
 let currentToken = null
-let currentAttribute = null
+// let currentAttribute = null
 const EOF = Symbol('EOF') // end of life
 
 let stack = [{ type: 'document', children: [] }]
@@ -47,7 +49,7 @@ function emit(token) {
 
         stack.push(element)
 
-    } else if (token.name && token.value) {
+    } else if (token.type === 'attribute') {
 
         top.attribute.push({
             [token.name]: token.value
@@ -64,7 +66,7 @@ function emit(token) {
         }
 
     } else if (token.type === 'endTag') {
-        if (top.type === token.tagName) {
+        if (top.type === token.tagName || token.isSelfClosing) {
             const wrapper = stack[stack.length - 2];
             wrapper.children.push(top);
             stack.pop();
@@ -125,19 +127,34 @@ function beforeAttributeName(character) {
     } else if (character.match(/^[\n\t\f\s]$/)) {
         return beforeAttributeName;
     } else if (character.match(/^[a-zA-Z]$/)) {
-        currentAttribute = {
+        currentToken = {
+            type: 'attribute',
             name: '',
             value: '',
         }
         return attributeName(character);
-    } else {
+    } else if (character === '/') {
+        return selfClosing;
+    }
+}
 
+function selfClosing(character) {
+    if (character === '>') {
+        emit({
+            type: 'endTag',
+            isSelfClosing: true,
+        })
+
+        return data
+
+    } else {
+        return selfClosing;
     }
 }
 
 function attributeName(character) {
     if (character.match(/^[a-zA-Z]$/)) {
-        currentAttribute.name += character;
+        currentToken.name += character;
 
         return attributeName;
     } else if (character === '=') {
@@ -159,15 +176,16 @@ function attributeValue(character) {
     if (character === '"') {
         return afterAttribute;
     } else {
-        currentAttribute.value += character;
+        currentToken.value += character;
         return attributeValue;
     }
 }
 
 function afterAttribute(character) {
     if (character === '>') {
-        emit(currentAttribute);
-        currentAttribute = {
+        emit(currentToken);
+        currentToken = {
+            type: 'attribute',
             name: '',
             value: ''
         }
@@ -175,12 +193,21 @@ function afterAttribute(character) {
     } else if (character.match(/[\n\t\f\s]/)) {
         return afterAttribute;
     } else if (character.match(/[a-zA-Z]/)) {
-        emit(currentAttribute);
-        currentAttribute = {
+        emit(currentToken);
+        currentToken = {
+            type: 'attribute',
             name: '',
             value: ''
         }
         return attributeName(character)
+    } else if (character === '/') {
+        emit(currentToken);
+        currentToken = {
+            type: 'attribute',
+            name: '',
+            value: ''
+        }
+        return selfClosing;
     }
 }
 
@@ -188,8 +215,6 @@ function endTagOpen(character) {
     if (character.match(/^[\n\t\f\s]$/)) {
         return endTagOpen
     } else if (character === '>') {
-        // selfClosing
-
         return data;
     } else if (character.match(/^[a-zA-Z]$/)) {
 
@@ -211,6 +236,7 @@ function parserHTML(htmlString) {
 const case1 = `
 <div name="daipeng" age="20" school="xidian">
     <div>child-div</div>
+    <input value="test"/>
     <p>i'm paragraph p</p>
 </div>
 `
