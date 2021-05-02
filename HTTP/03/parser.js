@@ -20,21 +20,33 @@
  * 
  */
 
+const css = require('css')
 let currentToken = null
-// let currentAttribute = null
-const EOF = Symbol('EOF') // end of life
+let currentAttribute = null
+
+const EOF = Symbol('EOF') // end of file
 
 let stack = [{ type: 'document', children: [] }]
 
 let element = null;
+let cssRules = []
 
+function addCSSRules(cssText) {
+    console.log(cssText)
+    let cssAST = css.parse(cssText);
+    cssRules.push(...cssAST.stylesheet.rules)
+    // console.log(JSON.stringify(cssAST,null,2) )
+}
+
+function computeCSS(element) {
+    console.log(cssRules)
+}
 /**
  * token type:
  * 1. type: startTag/endTag , tagName
  * 2. name, value (attribute)
  * 3. type: text, content
  */
-
 
 function emit(token) {
 
@@ -48,12 +60,12 @@ function emit(token) {
         }
 
         stack.push(element)
+        for (let prop of token.props) {
+            element.attribute.push(prop)
+        }
 
-    } else if (token.type === 'attribute') {
+        computeCSS(element)
 
-        top.attribute.push({
-            [token.name]: token.value
-        })
     } else if (token.type === 'text') {
 
         if (top.children[0] && top.children[0].type === 'text') {
@@ -66,14 +78,23 @@ function emit(token) {
         }
 
     } else if (token.type === 'endTag') {
+
         if (top.type === token.tagName || token.isSelfClosing) {
             const wrapper = stack[stack.length - 2];
             wrapper.children.push(top);
+
+            if (token.tagName === 'style') {
+                addCSSRules(top.children[0].content);
+            }
+
             stack.pop();
+
+        } else {
+            throw new Error(`startTag doesn't match endTag`);
         }
     }
 
-    console.log(token)
+    // console.log(token)
 }
 
 function data(character) {
@@ -97,6 +118,7 @@ function tagOpen(character) {
         currentToken = {
             type: 'startTag',
             tagName: '',
+            props: []
         }
         return tagName(character);
     } else if (character === '/') {
@@ -113,7 +135,7 @@ function tagName(character) {
         currentToken.tagName += character;
         return tagName;
     } else if (character.match(/^[\n\t\f\s]$/)) {
-        emit(currentToken);
+        // emit(currentToken);
         return beforeAttributeName;
     } else if (character === '>') {
         emit(currentToken)
@@ -123,15 +145,16 @@ function tagName(character) {
 
 function beforeAttributeName(character) {
     if (character === '>') {
+        emit(currentToken)
         return data;
     } else if (character.match(/^[\n\t\f\s]$/)) {
         return beforeAttributeName;
     } else if (character.match(/^[a-zA-Z]$/)) {
-        currentToken = {
-            type: 'attribute',
+        currentAttribute = {
             name: '',
             value: '',
         }
+
         return attributeName(character);
     } else if (character === '/') {
         return selfClosing;
@@ -140,6 +163,8 @@ function beforeAttributeName(character) {
 
 function selfClosing(character) {
     if (character === '>') {
+        emit(currentToken);
+        
         emit({
             type: 'endTag',
             isSelfClosing: true,
@@ -154,7 +179,7 @@ function selfClosing(character) {
 
 function attributeName(character) {
     if (character.match(/^[a-zA-Z]$/)) {
-        currentToken.name += character;
+        currentAttribute.name += character;
 
         return attributeName;
     } else if (character === '=') {
@@ -174,9 +199,15 @@ function beforeAttributeValue(character) {
 
 function attributeValue(character) {
     if (character === '"') {
+        currentToken.props.push(currentAttribute)
+        currentAttribute = {
+            name: '',
+            value: ''
+        }
+
         return afterAttribute;
     } else {
-        currentToken.value += character;
+        currentAttribute.value += character;
         return attributeValue;
     }
 }
@@ -184,30 +215,13 @@ function attributeValue(character) {
 function afterAttribute(character) {
     if (character === '>') {
         emit(currentToken);
-        currentToken = {
-            type: 'attribute',
-            name: '',
-            value: ''
-        }
         return data
-    } else if (character.match(/[\n\t\f\s]/)) {
-        return afterAttribute;
-    } else if (character.match(/[a-zA-Z]/)) {
-        emit(currentToken);
-        currentToken = {
-            type: 'attribute',
-            name: '',
-            value: ''
-        }
-        return attributeName(character)
+
     } else if (character === '/') {
         emit(currentToken);
-        currentToken = {
-            type: 'attribute',
-            name: '',
-            value: ''
-        }
         return selfClosing;
+    } else {
+        return beforeAttributeName(character);
     }
 }
 
@@ -233,16 +247,31 @@ function parserHTML(htmlString) {
     state = state(EOF)
 }
 
-const case1 = `
-<div name="daipeng" age="20" school="xidian">
-    <div>child-div</div>
-    <input value="test"/>
-    <p>i'm paragraph p</p>
-</div>
+let case1 = `
+<html lang="en">
+	<head>
+		<style>
+			.root {
+				width: 100%;
+				min-height: 300px;
+			}
+		</style>
+		<title>browser test</title>
+	</head>
+	<body>
+		<div class="root">
+			<div class="child-1">child-1</div>
+			<div class="child-2">child-2</div>
+			<div class="child-3">child-3</div>
+			<input value="test" />
+		</div>
+	</body>
+</html>
 `
-console.log(case1)
+// console.log(case1)
+// case1 = '<div value="test" name="daipeng" />'
 parserHTML(case1)
-console.log(JSON.stringify(stack, null, 2))
+// console.log(JSON.stringify(stack[0], null, 2))
 
 module.exports = {
     parserHTML,
