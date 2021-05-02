@@ -35,11 +35,135 @@ function addCSSRules(cssText) {
     console.log(cssText)
     let cssAST = css.parse(cssText);
     cssRules.push(...cssAST.stylesheet.rules)
-    // console.log(JSON.stringify(cssAST,null,2) )
+}
+
+
+function match(element, selector) {
+    // 不同类型的 css 选择器匹配 
+    // 简化为只处理 1 #id 2 .class 3 tagName 
+
+    if (!element || !element.attributes) return false;
+
+    if (selector.startsWith('#')) {
+        // id selector
+        // 找出 id 属性然后匹配
+        let idProps = element.attributes.filter(attr => {
+            if (attr.name === 'id') {
+                return true;
+            }
+        })
+        if (!idProps.length) return false;
+
+        let id = idProps[0].value;
+        return id === selector.replace('#', '')
+
+    } else if (selector.startsWith('.')) {
+        // class selector
+        let classProps = element.attributes.filter(attr => {
+            if (attr.name === 'class') {
+                return true;
+            }
+        })
+        if (!classProps.length) return false;
+
+        let className = classProps[0].value;
+        return className === selector.replace('.', '')
+
+    } else {
+        // tagName selector
+
+        return selector === element.type
+    }
+}
+
+function getSpecificity(selector) {
+    // 只考虑四种优先级
+    // [inline, id, class , tagName]
+    const p = [0, 0, 0, 0]
+
+    const selectorArr = selector.split(' ');
+    for (let s of selector) {
+        if (s.startsWith('#')) {
+            p[1] += 1;
+        } else if (s.startsWith('.')) {
+            p[2] += 1;
+        } else {
+            p[3] += 1;
+        }
+    }
+
+    return p;
+}
+
+function compare(sp1, sp2) {
+    for (let i = 0; i < 4; i++) {
+        if (sp1[i] > sp2[i]) {
+            return true;
+        } else if (sp1[i] == sp2[i]) {
+            continue;
+        } else {
+            return false
+        }
+    }
+
+    return true;
 }
 
 function computeCSS(element) {
-    console.log(cssRules)
+    let elements = [...stack].reverse();
+    if (!element.computedStyle) {
+        element.computedStyle = {};
+    }
+
+    for (let rule of cssRules) {
+        let selectorParts = rule.selectors[0].split(' ').reverse();
+        if (!match(element, selectorParts[0])) {
+            continue;
+        }
+
+        let matched = true;
+        // 从后向前匹配, 当前element 还没有 push 到 stack 中
+        let j = 0;
+
+        for (let i = 1; i < selectorParts.length; i++) {
+            if (!match(elements[j], selectorParts[i])) {
+                matched = false;
+                break;
+            }
+            j++;
+
+        }
+
+        if (matched) {
+            const currSelector = rule.selectors[0];
+            const sp = getSpecificity(currSelector);
+            const computedStyle = element.computedStyle;
+
+            // element.computedStyle = {
+            //     [rule.property]: {
+            //         value: rule.property.value,
+            //         specificity: 0
+            //     }
+            // }
+
+            for (let declaration of rule.declarations) {
+                if (!computedStyle[declaration.property]) {
+                    computedStyle[declaration.property] = {};
+                }
+
+                if (!computedStyle[declaration.property].value) {
+                    computedStyle[declaration.property].value = declaration.value
+                    computedStyle[declaration.property].specificity = sp;
+                } else {
+                    if (compare(computedStyle[declaration.property].specificity, sp)) {
+                        computedStyle[declaration.property].value = declaration.value
+                        computedStyle[declaration.property].specificity = sp;
+                    }
+                }
+            }
+            // console.log(`${element} will be add css rule: ${rule}`)
+        }
+    }
 }
 /**
  * token type:
@@ -55,16 +179,18 @@ function emit(token) {
     if (token.type === 'startTag') {
         element = {
             type: token.tagName,
-            attribute: [],
+            attributes: [],
             children: []
         }
 
-        stack.push(element)
+
         for (let prop of token.props) {
-            element.attribute.push(prop)
+            element.attributes.push(prop)
         }
 
         computeCSS(element)
+
+        stack.push(element)
 
     } else if (token.type === 'text') {
 
@@ -93,8 +219,6 @@ function emit(token) {
             throw new Error(`startTag doesn't match endTag`);
         }
     }
-
-    // console.log(token)
 }
 
 function data(character) {
@@ -164,7 +288,7 @@ function beforeAttributeName(character) {
 function selfClosing(character) {
     if (character === '>') {
         emit(currentToken);
-        
+
         emit({
             type: 'endTag',
             isSelfClosing: true,
@@ -251,10 +375,14 @@ let case1 = `
 <html lang="en">
 	<head>
 		<style>
-			.root {
+		    body .root {
 				width: 100%;
 				min-height: 300px;
 			}
+
+            .root .child-1{
+                color: red;
+            }
 		</style>
 		<title>browser test</title>
 	</head>
@@ -271,7 +399,7 @@ let case1 = `
 // console.log(case1)
 // case1 = '<div value="test" name="daipeng" />'
 parserHTML(case1)
-// console.log(JSON.stringify(stack[0], null, 2))
+console.log(JSON.stringify(stack[0], null, 2))
 
 module.exports = {
     parserHTML,
