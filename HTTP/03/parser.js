@@ -83,7 +83,7 @@ function getSpecificity(selector) {
     const p = [0, 0, 0, 0]
 
     const selectorArr = selector.split(' ');
-    for (let s of selector) {
+    for (let s of selectorArr) {
         if (s.startsWith('#')) {
             p[1] += 1;
         } else if (s.startsWith('.')) {
@@ -179,11 +179,10 @@ function emit(token) {
 
     if (token.type === 'startTag') {
         element = {
-            type: token.tagName,
+            type: 'element',
             attributes: [],
             children: []
         }
-
 
         for (let prop of token.props) {
             element.attributes.push(prop)

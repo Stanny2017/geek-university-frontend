@@ -21,8 +21,20 @@
 > layout
 
 - layout 类型： 传统排版、flex 排版、grid 排版
-- 根据浏览器属性来进行排版
+- 根据 css 属性来进行排版
+- 案例中只处理 flex 布局排版
 - 分行算法：把元素分进“行”（hang）
 - 若主轴设置 no-wrap 则强行分配进第一行
+- 根据布局属性计算出每个元素的具体位置（宽高、以及 left top）
+- 模拟采用 [images](https://www.npmjs.com/package/images) 这个库来渲染
+
+```js
+let viewport = images(800,600);
+let img = images(element.style.width, element.style.height)
+img.fill(rgba)// 使用 rgba 格式填充颜色，red, green, blue[, alpha]
+
+viewport.draw(img, left, top)
+viewport.save('imageName.jpg');
+```
 
 
