@@ -1,6 +1,7 @@
 module.exports = layout;
 
 
+// 预处理
 function getStyle() {
     if (!element.style) {
         element.style = {};
@@ -21,14 +22,26 @@ function getStyle() {
     return element.style;
 }
 
+function isElement(element) {
+    if (element.type !== 'text') {
+        return true
+    }
+
+    return false
+}
+
 
 function layout(element) {
     if (!element.computedStyle) return;
 
     let elementStyle = getStyle(element)
+
+    // 只处理 flex 布局，其余的先忽略
     if (elementStyle.display !== 'flex') return;
 
-    var items = element.children.filter(e => e.type === 'element')
+    // 过滤文本掉节点
+    var items = element.children.filter(e => isElement(e))
+
     items.sort(function (a, b) {
         return (a.order || 0) - (b.order || 0);
     })
@@ -75,47 +88,70 @@ function layout(element) {
         }
     })
 
-    var mainSize;
+    var mainSize; // 主轴尺寸
     var mainStart;
     var mainEnd;
-    var mainSign;
-    var mainBase;
+    var mainSign; // 按方向排布的时候, 属性延伸会相减
+    var mainBase; // 从做开始还是 从右开始
     var crossSize;
     var crossStart;
     var crossEnd;
     var crossSign;
     var crossBase;
 
-
-    if(style.flexDirection==='row'){
-        mainSize='width';
-        mainStart='left';
-        mainEnd='right';
-        mainSign=+1;
+    if (style.flexDirection === 'row') {
+        mainSize = 'width';
+        mainStart = 'left';
+        mainEnd = 'right';
+        mainSign = +1;
         mainBase = 0;
 
         crossSize = 'height';
-        crossStart='top';
-        crossEnd='bottom';
+        crossStart = 'top';
+        crossEnd = 'bottom';
     }
 
-    if(style.flexDirection=='row-reverse'){
+    if (style.flexDirection == 'row-reverse') {
+        mainSize = 'width';
+        mainStart = 'right';
+        mainEnd = 'left';
+        mainSign = -1;
+        mainBase = style.width; // 从右边开始
 
+        crossSize = 'height';
+        crossStart = 'top';
+        crossEnd = 'bottom';
     }
 
-    if(style.flexDirection=='colunmn'){
-        
+    if (style.flexDirection == 'colunmn') {
+        mainSize = 'height';
+        mainStart = 'top';
+        mainEnd = 'bottom';
+        mainSign = +1;
+        mainBase = 0;
+
+        crossSize = 'width';
+        crossStart = 'left';
+        crossEnd = 'right';
     }
 
-    if(style.flexDirection=='colunmn-reverse'){
-        
+    if (style.flexDirection == 'colunmn-reverse') {
+        mainSize = 'height';
+        mainStart = 'bottom';
+        mainEnd = 'top';
+        mainSign = -1;
+        mainBase = style.height; // 从右边开始
+
+        crossSize = 'width';
+        crossStart = 'left';
+        crossEnd = 'right';
     }
 
-    if(style.flexWrap=='wrap-reverse'){
-        
-    }else{
-        
+    if (style.flexWrap == 'wrap-reverse') {
+        [crossStart, crossEnd] = [crossEnd, crossStart];
+        crossSign = -1;
+    } else {
+        crossBase = 0;
+        crossSign = 1;
     }
-
-
 }
