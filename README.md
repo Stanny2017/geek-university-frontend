@@ -1,12 +1,12 @@
 # geek-university-frontend
 
-## week01
+# week01
 
 - 基于`net`(TCP) 模块封装 Request 类，实现 http 请求与解析
 - 按照 http 请求报文格式将封装请求内容
 - 接收服务器数据返回后，开始解析`ResponseParser`
 
-## week02
+# week02
 
 - 根据 html 字符串手动转换成 dom 树
 - 解析 css 样式
@@ -16,7 +16,7 @@
 - 获取父元素序列
 - 计算样式优先级，按优先级覆盖之前的样式，添加到 dom 节点上
 
-## week03
+# week03
 
 > layout
 
@@ -38,3 +38,19 @@ viewport.save('imageName.jpg');
 ```
 
 
+# week04
+
+ production（产生式）：一步一步去定义一门语言的基础设施（工具/方法）；
+
+## 产生式
+
+1. Symbol: 定义语法的结构名称
+2. Terminal Symbol ： 可以理解为叶子节点，最小的明确的不可拆分的结构
+3. Non-Terminal Symbol： 由其他 Symbol 组成，可递归
+4. 语言定义：Non-Terminal Symbol 由哪些 Symbol 组成，其中的 Non-Terminal Symbol 还可以逐层拆分，直至到 Terminal Symbol；
+5. 语法树：把一段具体的语言的文本，根据产生式以树形结构表示出来；
+
+### 产生式具体的写法
+
+- BNF（Backus Normal Form 巴科斯-诺尔范式）一个美国人 Backus 和一个丹麦人 Normal 合作发明；
+- 
