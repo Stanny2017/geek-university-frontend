@@ -1,0 +1,14 @@
+.carousel {
+	width: 1130px;
+	height: 630px;
+	overflow: hidden;
+	white-space: nowrap;
+	transition: ease 0.5s;
+}
+
+.carousel > div {
+	width: 100%;
+	height: 100%;
+	display: inline-block;
+	transition: ease 0.5s;
+}

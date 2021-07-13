@@ -54,3 +54,30 @@ viewport.save('imageName.jpg');
 
 - BNF（Backus Normal Form 巴科斯-诺尔范式）一个美国人 Backus 和一个丹麦人 Normal 合作发明；
 - 
+
+# week05 - week12
+
+busy with interview, not continue studying, but now i'll fighting to catch the goal!
+
+# 组件化
+
+前端架构：
+1. 组件化（更重要）：好的组件化提高代码复用率
+2. 架构模式： MVC、MVVM 关心前端和数据逻辑层是如何交互的
+
+组件是一种 UI 强相关的模块，或是特殊的对象
+- Properties (JS code) 强调从属关系 面向对象
+- methods
+- inherit
+- attribute (markup code) 强调描述性 xml
+- config & state
+- event
+- lifecycle
+- children
+
+## jsx
+
+基于 babel-transform-react-plugin 手动实现 createElement 支持 jsx 写法；
+
+1. 支持基本 html 自由 type 类型节点，class、textNode
+2. 支持自定义类组件
